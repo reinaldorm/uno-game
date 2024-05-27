@@ -1,4 +1,1 @@
-# uno-game
-# uno-game
-# uno-game
-# uno-game
+### A web implementation of the Uno game.
