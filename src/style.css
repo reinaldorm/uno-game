@@ -1,0 +1,12 @@
+body {
+    background-color: #111;
+}
+
+.card {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.card.available {
+    border-color: greenyellow;
+}

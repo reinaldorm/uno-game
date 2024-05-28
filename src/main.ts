@@ -1,7 +1,10 @@
 import Game from "./classes/Game";
+import Interface from "./classes/Interface";
+
+import "./style.css";
 
 const game = new Game(7);
 
 game.init();
 
-console.log(game);
+const gameInterface = new Interface(game);

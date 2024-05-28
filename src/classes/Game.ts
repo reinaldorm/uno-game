@@ -4,6 +4,7 @@ import Player from "./Player";
 interface Turn {
     player: Player;
     color: CardColor;
+    coloring: boolean;
     selectedCards: Card[];
     availableCards: Card[];
 }
@@ -37,6 +38,7 @@ export default class Game {
         this.turn = {
             player: this.players[0],
             color: this.firstCard.color,
+            coloring: false,
             selectedCards: [],
             availableCards: [],
         };
@@ -45,7 +47,7 @@ export default class Game {
         this.config = { handSize };
     }
 
-    createDeck() {
+    private createDeck() {
         // four zero cards of each color
         for (let color = 0; color < 4; color += 1) {
             // @ts-ignore: `color` and `number` always in range
@@ -81,14 +83,14 @@ export default class Game {
         }
     }
 
-    shuffleDeck() {
+    private shuffleDeck() {
         for (let i = this.deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
         }
     }
 
-    handOutDeck() {
+    private handOutDeck() {
         for (let player of this.players) {
             for (let i = 0; i < this.config.handSize; i += 1) {
                 //@ts-ignore: deck always full when handing out cards
@@ -97,7 +99,7 @@ export default class Game {
         }
     }
 
-    checkAvailableCards() {
+    private checkAvailableCards() {
         const availableCards: Card[] = [];
 
         // check whether or not the player is stacking cards, next available cards
@@ -140,24 +142,68 @@ export default class Game {
         this.turn.availableCards = availableCards;
     }
 
-    selectCard() {}
+    public selectCard(cardId: string) {
+        if (this.turn.availableCards.length <= 0) {
+            console.log("no cards available");
+            return;
+        }
 
-    playCard() {}
+        const toBeSelected = this.turn.availableCards.find(({ id }) => id === cardId);
 
-    changeTurn(reverse: boolean = false, skip: boolean = false) {}
+        if (toBeSelected) {
+            this.turn.selectedCards.push(toBeSelected);
+            console.log("card selected");
+        } else {
+            console.log("card not available");
+        }
+    }
 
-    declareWinner() {}
+    public unselectCards() {
+        this.turn.selectedCards = [];
+        this.turn.availableCards = [];
+        this.checkAvailableCards();
+    }
 
-    init() {
+    public playCard() {
+        const firstCard = this.turn.selectedCards[0];
+
+        if (firstCard.type === "wild") {
+            this.turn.coloring = true;
+        }
+
+        this.turn.player.cards = this.turn.player.cards.filter((card) => {
+            return this.turn.selectedCards.every(({ id }) => card.id !== id);
+        });
+    }
+
+    private updateTurn(reverse: boolean = false, skip: number = 0) {
+        this.turn.availableCards = [];
+        this.turn.selectedCards = [];
+
+        const nextPlayer = this.players[this.turn.player.slot + 1];
+
+        if (nextPlayer) {
+            this.turn.player = nextPlayer;
+        } else {
+            this.turn.player = this.players[0];
+        }
+    }
+
+    private updateStreak({ ongoing, payload }: Partial<Streak>) {
+        if (ongoing && payload) {
+            this.streak.ongoing = true;
+            this.streak.payload += payload;
+        } else {
+            this.streak.ongoing = false;
+            this.streak.payload = 0;
+        }
+    }
+
+    private declareWinner() {}
+
+    public init() {
         this.createDeck();
         this.shuffleDeck();
-
-        const player = new Player(7, 1);
-        this.players.push(player);
-        this.turn.player = this.players[0];
-
-        this.handOutDeck();
-        this.checkAvailableCards();
 
         return this;
     }
